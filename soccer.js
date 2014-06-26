@@ -1,56 +1,50 @@
+var vec2d = vec.vec2d;
+
 function Soccer(field) {
   this.players = [];
+
   var soccer = this;
   field.addEventListener('click', function(){soccer.click()});
   this.ctx = field.getContext("2d");
-  this.players.push(new player(new point(50, 50)));
-  this.players.push(new player(new point(100, 50)));
-  this.players.push(new player(new point(150, 50)));
+  var p = new player(new vec2d(50,50));
+  this.players.push(p);
+  this.players.push(new player(new vec2d(100, 50)));
+  this.players.push(new player(new vec2d(150, 50)));
   this.timestamp = null;
   window.requestAnimationFrame(function(ts) { soccer.timestamp = ts; })
+  this.WIDTH = field.width;
+  this.HEIGHT = field.height;
 
-  function point(x, y) {
-    this.x = x;
-    this.y = y;
+  function ConstrainToField(p) {
+    if (p.x < 0) p.x = 5;
+    if (p.x > this.WIDTH) p.x = this.WIDTH - 10;
+    if (p.y < 0) p.y = 5;
+    if (p.y > this.WIDTH) p.y = this.HEIGHT - 10;
   }
-
-  function DistSquared(p1, p2) {
-    return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
-  }
-
-  point.prototype.moveTo = function(p, dist) {
-    if (DistSquared(this, p) <= dist * dist) {
-      this.x = p.x;
-      this.y = p.y;
-      return;
-    }
-    var x_dist = Math.abs(p.x - this.x);
-    var y_dist = Math.abs(p.y - this.y);
-    var x_pct = x_dist / (x_dist + y_dist);
-    if (this.x < p.x) {
-      this.x += x_pct * dist;
-    } else {
-      this.x -= x_pct * dist;
-    }
-    if (this.y < p.y) {
-      this.y += (1 - x_pct) * dist;
-    } else {
-      this.y -= (1 - x_pct) * dist;
-    }
- }
 
   function player(loc) {
     this.location = loc;
     this.color = "green";
     this.rotation = 0;
-    this.dest = new point(50,50);
+    this.dest = new vec2d(50,50);
+  }
+
+  function ball(loc) {
+    this.location = loc;
+    this.vel = new vec2d(0,0);  // m/s
+    this.DRAG = 1.5;  // 1.5m/s^2
+  }
+
+  ball.prototype.UpdatePos = function(step) {
+
   }
 }
 
 Soccer.prototype.click = function() {
+  var that = this;
   this.players.forEach(function(p) {
-    p.dest.x = getRandomInt(0,200);
-    p.dest.y = getRandomInt(0,200);
+    p.dest.x = getRandomInt(0, that.WIDTH);
+    p.dest.y = getRandomInt(0, that.HEIGHT);
   });
 }
 
@@ -60,12 +54,12 @@ Soccer.prototype.MainLoop = function(ts) {
 
   // game logic
   this.players.forEach(function(p) {
-    p.location.moveTo(p.dest, 4);
+    p.location.MoveTowards(p.dest, 4);
   });
 
   // render logic
   var ctx = this.ctx;
-  ctx.clearRect(0, 0, 200, 200);
+  ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
   this.players.forEach(function(p) {
     ctx.fillStyle = p.color;
     var PLAYER_SIZE = 10;
