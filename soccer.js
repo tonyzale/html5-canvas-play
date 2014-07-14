@@ -14,6 +14,7 @@ function Soccer(field) {
   window.requestAnimationFrame(function(ts) { soccer.timestamp = ts; })
   this.WIDTH = field.width;
   this.HEIGHT = field.height;
+  this.b = new ball(new vec2d(100,100));
 
   function ConstrainToField(p) {
     if (p.x < 0) p.x = 5;
@@ -31,12 +32,13 @@ function Soccer(field) {
 
   function ball(loc) {
     this.location = loc;
-    this.vel = new vec2d(0,0);  // m/s
+    this.vel = new vec2d(30,0);  // m/s
     this.DRAG = 1.5;  // 1.5m/s^2
   }
 
   ball.prototype.UpdatePos = function(step) {
-
+    this.location.IPApplyVelocity(this.vel, step);
+    this.vel.IPApplyDrag(this.DRAG, step);
   }
 }
 
@@ -50,12 +52,14 @@ Soccer.prototype.click = function() {
 
 Soccer.prototype.MainLoop = function(ts) {
   var step = ts - this.timestamp;
+  step = 1.0 / 60.0;
   this.timestamp = ts;
 
   // game logic
   this.players.forEach(function(p) {
-    p.location.MoveTowards(p.dest, 4);
+    p.location.IPMoveTowards(p.dest, 4);
   });
+  this.b.UpdatePos(step);
 
   // render logic
   var ctx = this.ctx;
@@ -69,6 +73,11 @@ Soccer.prototype.MainLoop = function(ts) {
     ctx.rotate(-p.rotation);
     ctx.translate(-p.location.x, -p.location.y);
   });
+  ctx.fillStyle = "black";
+  ctx.translate(this.b.location.x, this.b.location.y);
+  ctx.fillRect(-1, -1, 2, 2);
+  ctx.translate(-this.b.location.x, -this.b.location.y);
+  document.getElementById("debug").innerHTML = this.b.location.str() + " vel: " + this.b.vel.str();
 
   // request next frame
   var soccer = this;
